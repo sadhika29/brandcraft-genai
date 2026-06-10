@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrandCraft – AI Branding Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Corner decorations -->
+<svg class="corner-svg corner-tl" width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10,100 Q10,10 100,10" stroke="#C9758A" stroke-width="2" fill="none"/>
+  <path d="M10,80 Q10,10 80,10" stroke="#C9758A" stroke-width="1.5" fill="none"/>
+  <circle cx="30" cy="30" r="4" fill="#C9758A"/>
+  <circle cx="60" cy="15" r="2.5" fill="#FDCFB0"/>
+  <circle cx="15" cy="60" r="2.5" fill="#FDCFB0"/>
+  <path d="M40,80 C40,60 60,60 60,40" stroke="#FDCFB0" stroke-width="1.5" fill="none"/>
+  <path d="M80,40 C60,40 60,60 40,60" stroke="#F8C8D4" stroke-width="1" fill="none"/>
+  <circle cx="80" cy="40" r="3" fill="#C9758A" opacity="0.6"/>
+  <circle cx="40" cy="80" r="3" fill="#C9758A" opacity="0.6"/>
+  <path d="M20,20 L25,25 M20,25 L25,20" stroke="#FDCFB0" stroke-width="1.5"/>
+  <path d="M90,20 L95,25 M90,25 L95,20" stroke="#F8C8D4" stroke-width="1.5"/>
+  <path d="M20,90 L25,95 M20,95 L25,90" stroke="#F8C8D4" stroke-width="1.5"/>
+</svg>
+<svg class="corner-svg corner-br" width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10,100 Q10,10 100,10" stroke="#C9758A" stroke-width="2" fill="none"/>
+  <path d="M10,80 Q10,10 80,10" stroke="#C9758A" stroke-width="1.5" fill="none"/>
+  <circle cx="30" cy="30" r="4" fill="#C9758A"/>
+  <circle cx="60" cy="15" r="2.5" fill="#FDCFB0"/>
+  <circle cx="15" cy="60" r="2.5" fill="#FDCFB0"/>
+  <path d="M40,80 C40,60 60,60 60,40" stroke="#FDCFB0" stroke-width="1.5" fill="none"/>
+  <circle cx="80" cy="40" r="3" fill="#C9758A" opacity="0.6"/>
+</svg>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ─────────────── AUTH SCREEN ─────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="logo-mark">
+      <svg class="logo-svg" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="lg1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#FDCFB0"/>
+            <stop offset="100%" stop-color="#C9758A"/>
+          </radialGradient>
+        </defs>
+        <circle cx="26" cy="26" r="24" fill="url(#lg1)" opacity="0.2"/>
+        <text x="10" y="33" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#C9758A">BC</text>
+        <!-- sparkles -->
+        <circle cx="42" cy="10" r="2" fill="#FDCFB0" opacity="0.9"/>
+        <circle cx="10" cy="42" r="1.5" fill="#F8C8D4" opacity="0.8"/>
+        <path d="M44,16 L46,18 L44,20 L42,18 Z" fill="#C9758A" opacity="0.7"/>
+        <path d="M8,8 L9,10 L8,12 L7,10 Z" fill="#FDCFB0" opacity="0.7"/>
+        <path d="M46,38 L47,40 L46,42 L45,40 Z" fill="#F8C8D4" opacity="0.6"/>
+      </svg>
+      <span class="logo-text">BrandCraft</span>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Create Account</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="form-login" class="auth-form active">
+      <div class="field">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="remember-row">
+        <label><input type="checkbox" id="remember"> Remember me</label>
+        <a class="forgot-link" onclick="showForgot()">Forgot password?</a>
+      </div>
+      <button class="btn-primary" onclick="handleLogin()">Sign in</button>
+      <div class="auth-switch">Don't have an account? <a onclick="switchAuthTab('signup')">Create one</a></div>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="form-signup" class="auth-form">
+      <div class="field">
+        <label>Full name</label>
+        <input type="text" id="signup-name" placeholder="Your Name">
+      </div>
+      <div class="field">
+        <label>Email address</label>
+        <input type="email" id="signup-email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 8 characters">
+      </div>
+      <div class="field">
+        <label>Confirm password</label>
+        <input type="password" id="signup-confirm" placeholder="Repeat password">
+      </div>
+      <button class="btn-primary" onclick="handleSignup()">Create account</button>
+      <div class="auth-switch">Already have an account? <a onclick="switchAuthTab('login')">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── MAIN APP ─────────────────────────────────── -->
+<div id="app">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="26" r="24" fill="rgba(201,117,138,0.15)"/>
+        <text x="10" y="33" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#C9758A">BC</text>
+      </svg>
+      <span class="logo-text">BrandCraft</span>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Brand Tools</div>
+      <button class="nav-item" onclick="showPage('names')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Brand Names
+      </button>
+      <button class="nav-item" onclick="showPage('logos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+        Logo Generator
+      </button>
+      <button class="nav-item" onclick="showPage('content')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Content Studio
+      </button>
+      <button class="nav-item" onclick="showPage('sentiment')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        Sentiment Radar
+      </button>
+      <button class="nav-item" onclick="showPage('assistant')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        AI Assistant
+      </button>
+    </div>
+    <div class="nav-section" style="margin-top:auto; padding-bottom:20px;">
+      <button class="nav-item" onclick="handleLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title" id="page-title">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        <div class="user-avatar" id="user-avatar">U</div>
+      </div>
+    </div>
+
+    
+
+    <!-- ── DASHBOARD ─────────────────────────────────────────── -->
+    <div id="page-dashboard" class="page active" style="padding-top:8px;">
+      <div class="hero-banner">
+        <div class="hero-title">Welcome to BrandCraft ✨</div>
+        <p class="hero-sub">Your AI-powered branding studio. Generate brand names, logos, content, and insights — all in one place.</p>
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+          <button class="btn btn-rose" onclick="showPage('names')">Generate Brand Names</button>
+          <button class="btn btn-outline" onclick="showPage('assistant')">Chat with AI Assistant</button>
+        </div>
+      </div>
+      <div class="grid-4">
+        <div class="stat-card">
+          <div class="stat-icon">🏷️</div>
+          <div class="stat-num" id="stat-names">0</div>
+          <div class="stat-label">Names Generated</div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="pb-names" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎨</div>
+          <div class="stat-num" id="stat-logos">0</div>
+          <div class="stat-label">Logo Concepts</div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="pb-logos" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✍️</div>
+          <div class="stat-num" id="stat-content">0</div>
+          <div class="stat-label">Content Pieces</div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="pb-content" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💬</div>
+          <div class="stat-num" id="stat-chats">0</div>
+          <div class="stat-label">Chat Messages</div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="pb-chats" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:20px;">
+        <div class="panel">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Quick Actions
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn btn-outline" style="justify-content:flex-start;" onclick="showPage('names')">🏷️ Generate brand names for my startup</button>
+            <button class="btn btn-outline" style="justify-content:flex-start;" onclick="showPage('content')">✍️ Write slogans and social captions</button>
+            <button class="btn btn-outline" style="justify-content:flex-start;" onclick="showPage('sentiment')">📊 Analyze customer reviews</button>
+            <button class="btn btn-outline" style="justify-content:flex-start;" onclick="showPage('logos')">🎨 Design logo concepts</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Recent Activity
+          </div>
+          <div id="recent-activity" style="font-size:14px;color:var(--text-light);">No activity yet. Start generating!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BRAND NAMES ─────────────────────────────────────── -->
+    <div id="page-names" class="page">
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+          Brand Name Generator
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Business Type</label>
+            <input class="form-control" id="biz-type" placeholder="e.g. SaaS, E-commerce, Agency">
+          </div>
+          <div class="form-group">
+            <label>Industry</label>
+            <input class="form-control" id="biz-industry" placeholder="e.g. Health, Tech, Fashion">
+          </div>
+          <div class="form-group">
+            <label>Target Audience</label>
+            <input class="form-control" id="biz-audience" placeholder="e.g. Millennials, SMBs, Parents">
+          </div>
+          <div class="form-group">
+            <label>Brand Personality</label>
+            <input class="form-control" id="biz-personality" placeholder="e.g. Bold, Elegant, Playful">
+          </div>
+          <div class="form-group">
+            <label>Language</label>
+            <select class="form-control" id="biz-language">
+              <option>English</option><option>Hindi</option><option>Telugu</option><option>Tamil</option>
+              <option>Kannada</option><option>Malayalam</option><option>Marathi</option><option>Gujarati</option>
+              <option>Punjabi</option><option>Bengali</option><option>Arabic</option><option>French</option>
+              <option>German</option><option>Spanish</option><option>Portuguese</option><option>Italian</option>
+              <option>Japanese</option><option>Korean</option><option>Chinese</option><option>Russian</option>
+              <option>Turkish</option><option>Dutch</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Country / Region</label>
+            <input class="form-control" id="biz-country" placeholder="e.g. India, USA, Global">
+          </div>
+        </div>
+        <button class="btn btn-rose" onclick="generateNames()" id="btn-gen-names">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+          Generate Brand Names
+        </button>
+      </div>
+      <div id="names-results"></div>
+    </div>
+
+    <!-- ── LOGO GENERATOR ──────────────────────────────────── -->
+    <div id="page-logos" class="page">
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+          Logo Concept Generator
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Brand Name</label>
+            <input class="form-control" id="logo-brand" placeholder="e.g. NovaSpark">
+          </div>
+          <div class="form-group">
+            <label>Industry</label>
+            <input class="form-control" id="logo-industry" placeholder="e.g. Technology">
+          </div>
+          <div class="form-group">
+            <label>Logo Style</label>
+            <select class="form-control" id="logo-style">
+              <option>Minimal</option><option>Luxury</option><option>Modern</option>
+              <option>Vintage</option><option>Startup</option><option>Tech</option>
+              <option>Fashion</option><option>Mascot</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Color Palette</label>
+            <div style="display: flex; gap: 8px;">
+              <input class="form-control" id="logo-colors" placeholder="e.g. Navy & Gold, Pastels" style="flex: 1;">
+              <input type="color" id="logo-color-picker" value="#C9758A" style="width: 42px; height: 42px; padding: 0; border: 1px solid var(--card-border); border-radius: 8px; cursor: pointer; background: none;" title="Choose color">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-rose" onclick="generateLogos()" id="btn-gen-logos">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Generate Logo Concepts
+        </button>
+      </div>
+      <div id="logos-results"></div>
+    </div>
+
+    <!-- ── CONTENT STUDIO ──────────────────────────────────── -->
+    <div id="page-content" class="page">
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Content Automation Studio
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Brand Name</label>
+            <input class="form-control" id="cont-brand" placeholder="Your brand name">
+          </div>
+          <div class="form-group">
+            <label>Industry</label>
+            <input class="form-control" id="cont-industry" placeholder="e.g. Fitness, Food, Finance">
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>Brand Tone</label>
+            <select class="form-control" id="cont-tone">
+              <option>Professional & Trustworthy</option><option>Fun & Playful</option>
+              <option>Bold & Inspiring</option><option>Elegant & Luxurious</option>
+              <option>Friendly & Approachable</option><option>Witty & Creative</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-rose" onclick="generateContent('slogans')" id="btn-slogans">✨ Slogans</button>
+          <button class="btn btn-outline" onclick="generateContent('stories')" id="btn-stories">📖 Brand Stories</button>
+          <button class="btn btn-outline" onclick="generateContent('social')" id="btn-social">📱 Social Captions</button>
+          <button class="btn btn-outline" onclick="generateContent('ads')" id="btn-ads">📢 Ad Copies</button>
+          <button class="btn btn-outline" onclick="generateContent('emails')" id="btn-emails">📧 Email Templates</button>
+        </div>
+      </div>
+      <div id="content-results"></div>
+    </div>
+
+    <!-- ── SENTIMENT RADAR ─────────────────────────────────── -->
+    <div id="page-sentiment" class="page">
+      <div class="panel">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+          Sentiment Radar
+        </div>
+        <div class="form-group">
+          <label>Paste Customer Reviews (one per line, or as a block)</label>
+          <textarea class="form-control" id="sentiment-input" rows="6" placeholder="The product is amazing! Delivery was fast.&#10;Terrible quality, very disappointed.&#10;Pretty good overall, would recommend."></textarea>
+        </div>
+        <button class="btn btn-rose" onclick="analyzeSentiment()" id="btn-sentiment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Analyze Sentiment
+        </button>
+      </div>
+      <div id="sentiment-results"></div>
+    </div>
+
+    <!-- ── AI ASSISTANT ────────────────────────────────────── -->
+    <div id="page-assistant" class="page">
+      <div class="panel" style="padding:0;overflow:hidden;">
+        <div style="padding:20px 24px 16px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#F8C8D4,#FDCFB0);display:flex;align-items:center;justify-content:center;font-size:18px;">✨</div>
+          <div>
+            <div style="font-weight:600;font-size:15px;color:var(--text-dark);">BrandCraft AI Assistant</div>
+            <div style="font-size:12px;color:var(--text-light);">Branding & Marketing specialist</div>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+            <button id="btn-clear-chat" class="btn btn-outline" style="padding: 4px 8px; font-size: 11px; height: auto;" onclick="clearChatHistory()">Clear History</button>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="width:8px;height:8px;background:#67C23A;border-radius:50%;"></div>
+              <span style="font-size:12px;color:var(--text-light);">Online</span>
+            </div>
+          </div>
+        </div>
+        <div class="suggested-prompts">
+          <button class="prompt-chip" onclick="sendPromptChip('How do I build a strong brand identity?')">Brand identity tips</button>
+          <button class="prompt-chip" onclick="sendPromptChip('What makes a great brand name?')">Great brand names</button>
+          <button class="prompt-chip" onclick="sendPromptChip('How to create a brand strategy for a startup?')">Startup strategy</button>
+          <button class="prompt-chip" onclick="sendPromptChip('Tips for social media branding')">Social media branding</button>
+        </div>
+        <div class="chat-window" id="chat-window">
+          <div class="chat-msg assistant">
+            <div class="chat-name">BrandCraft AI</div>
+            <div class="chat-bubble">Hello! I'm your BrandCraft AI Assistant 👋<br><br>I specialize in branding, marketing, content strategy, logo design, and business identity. How can I help you build an unforgettable brand today?</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-input" placeholder="Ask about branding, strategy, marketing…" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send" onclick="sendChat()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<script src="app.js"></script>
+</body>
+</html>
