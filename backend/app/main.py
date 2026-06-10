@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 
+from app.database import engine, Base
+
 from app.api import (
     auth_router, generator_router, logo_router,
     content_router, sentiment_router, assistant_router
