@@ -5,11 +5,11 @@ from typing import List
 from sqlalchemy.orm import Session
 import google.generativeai as genai
 
-from backend.app.database import get_db
-from backend.app.models import User, SavedContent
-from backend.app.schemas import ContentRequest, ContentResponse, ContentDataSchema
-from backend.app.auth import get_current_user
-from backend.app.config import GEMINI_API_KEY, HAS_GEMINI_KEY
+from app.database import get_db
+from app.models import User, SavedContent
+from app.schemas import ContentRequest, ContentResponse, ContentDataSchema
+from app.auth import get_current_user
+from app.config import GEMINI_API_KEY, HAS_GEMINI_KEY
 
 router = APIRouter(prefix="/api/content", tags=["content"])
 logger = logging.getLogger(__name__)

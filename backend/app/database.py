@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from backend.app.config import DATABASE_URL
+from app.config import DATABASE_URL
 
 # Connect to database. In SQLite, check_same_thread=False allows multi-thread access
 engine = create_engine(

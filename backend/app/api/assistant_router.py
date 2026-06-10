@@ -2,11 +2,11 @@ import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.app.database import get_db
-from backend.app.schemas import ChatRequest, ChatResponse, ChatMessage
-from backend.app.auth import get_current_user
-from backend.app.models import User, ChatMessageDB
-from backend.app.config import GEMINI_API_KEY, HAS_GEMINI_KEY
+from app.database import get_db
+from app.schemas import ChatRequest, ChatResponse, ChatMessage
+from app.auth import get_current_user
+from app.models import User, ChatMessageDB
+from app.config import GEMINI_API_KEY, HAS_GEMINI_KEY
 import google.generativeai as genai
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])

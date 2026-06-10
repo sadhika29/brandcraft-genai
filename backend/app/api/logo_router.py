@@ -12,11 +12,11 @@ from sqlalchemy.orm import Session
 import httpx
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance, ImageFilter
 
-from backend.app.database import get_db
-from backend.app.models import User, GeneratedLogo
-from backend.app.schemas import LogoRequest, LogoResponse
-from backend.app.auth import get_current_user
-from backend.app.config import HUGGINGFACE_API_KEY, HAS_HF_KEY, UPLOADS_DIR
+from app.database import get_db
+from app.models import User, GeneratedLogo
+from app.schemas import LogoRequest, LogoResponse
+from app.auth import get_current_user
+from app.config import HUGGINGFACE_API_KEY, HAS_HF_KEY, UPLOADS_DIR
 
 # ReportLab imports for PDF generation
 from reportlab.lib.pagesizes import letter
@@ -395,7 +395,7 @@ def delete_logo(logo_id: int, current_user: User = Depends(get_current_user), db
         raise HTTPException(status_code=404, detail="Logo not found")
         
     # Delete local file if it exists
-    from backend.app.config import BASE_DIR
+    from app.config import BASE_DIR
     full_path = BASE_DIR.parent / logo.file_path
     if full_path.exists():
         try:
@@ -414,7 +414,7 @@ def download_logo(logo_id: int, img_format: str, db: Session = Depends(get_db)):
     if not logo:
         raise HTTPException(status_code=404, detail="Logo asset not found")
         
-    from backend.app.config import BASE_DIR
+    from app.config import BASE_DIR
     file_path = BASE_DIR.parent / logo.file_path
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Logo file not found on server disk")

@@ -6,14 +6,14 @@ from unittest.mock import patch, MagicMock
 # Add project root to sys.path so we can import backend packages
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from backend.app.schemas import BrandRequest
-from backend.app.api.generator_router import generate_names
-from backend.app.api.logo_router import parse_color_to_rgb, draw_procedural_logo
+from app.schemas import BrandRequest
+from app.api.generator_router import generate_names
+from app.api.logo_router import parse_color_to_rgb, draw_procedural_logo
 
 class TestBrandCraftEnhancements(unittest.TestCase):
 
-    @patch('backend.app.api.generator_router.genai.GenerativeModel')
-    @patch('backend.app.api.generator_router.HAS_GEMINI_KEY', True)
+    @patch('app.api.generator_router.genai.GenerativeModel')
+    @patch('app.api.generator_router.HAS_GEMINI_KEY', True)
     def test_generate_names_gemini_uniqueness(self, mock_model_class):
         """Test that generate_names handles Gemini API response and enforces uniqueness."""
         # Mock genai response with duplicate names

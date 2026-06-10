@@ -2,10 +2,10 @@ import re
 from collections import Counter
 import logging
 from fastapi import APIRouter, Depends, HTTPException
-from backend.app.schemas import SentimentRequest, SentimentResponse, EmotionDetection
-from backend.app.auth import get_current_user
-from backend.app.models import User
-from backend.app.config import HUGGINGFACE_API_KEY, HAS_HF_KEY
+from app.schemas import SentimentRequest, SentimentResponse, EmotionDetection
+from app.auth import get_current_user
+from app.models import User
+from app.config import HUGGINGFACE_API_KEY, HAS_HF_KEY
 import httpx
 
 router = APIRouter(prefix="/api/sentiment", tags=["sentiment"])

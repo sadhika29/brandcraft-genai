@@ -5,9 +5,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 
-from backend.app.database import engine, Base
-from backend.app.api import (
-    auth_router, generator_router, logo_router, content_router, sentiment_router, assistant_router
+from app.api import (
+    auth_router, generator_router, logo_router,
+    content_router, sentiment_router, assistant_router
 )
 
 # Create Database tables on startup

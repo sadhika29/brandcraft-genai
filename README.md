@@ -72,13 +72,13 @@ Activate your virtual environment and start the Uvicorn development server:
 **Windows PowerShell:**
 ```powershell
 .\venv\Scripts\activate
-uvicorn backend.app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 **Linux / macOS Terminal:**
 ```bash
 source venv/bin/activate
-uvicorn backend.app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 ### 3. Open the Application

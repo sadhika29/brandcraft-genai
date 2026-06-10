@@ -2,16 +2,16 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
-from backend.app.database import get_db
-from backend.app.models import User
-from backend.app.schemas import (
+from app.database import get_db
+from app.models import User
+from app.schemas import (
     UserCreate, UserLogin, UserResponse, Token, ForgotPasswordRequest, ResetPasswordConfirm
 )
-from backend.app.auth import (
+from app.auth import (
     get_password_hash, verify_password, create_access_token, create_refresh_token, get_current_user
 )
-from backend.app.mail import send_verification_email, send_reset_password_email
-from backend.app.config import SMTP_USER, SMTP_PASSWORD
+from app.mail import send_verification_email, send_reset_password_email
+from app.config import SMTP_USER, SMTP_PASSWORD
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
