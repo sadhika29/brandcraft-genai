@@ -151,40 +151,35 @@ def draw_procedural_logo(brand_name: str, industry: str, style: str, color_theme
     initials = brand_name[:2].upper() if len(brand_name) >= 2 else brand_name[:1].upper()
     
     # Fonts loading fallback
-    font_choices = [
-        "C:\\Windows\\Fonts\\Georgia.ttf",
-        "C:\\Windows\\Fonts\\segoeuib.ttf",
-        "C:\\Windows\\Fonts\\segoeui.ttf",
-        "C:\\Windows\\Fonts\\calibrib.ttf",
-        "C:\\Windows\\Fonts\\calibri.ttf",
-        "C:\\Windows\\Fonts\\arialbd.ttf",
-        "C:\\Windows\\Fonts\\arial.ttf"
-    ]
-    
+    BUNDLED_FONT = Path(__file__).parent.parent / "assets" / "fonts" / "DejaVuSans.ttf"
+
     is_serif = (seed % 2 == 0) or ("luxury" in style.lower()) or ("vintage" in style.lower())
-    selected_font = "arial.ttf"
-    
-    if is_serif:
-        for path in ["C:\\Windows\\Fonts\\Georgia.ttf", "C:\\Windows\\Fonts\\cambriab.ttf", "C:\\Windows\\Fonts\\cambria.ttf"]:
-            if os.path.exists(path):
-                selected_font = path
-                break
-    else:
-        for path in ["C:\\Windows\\Fonts\\segoeuib.ttf", "C:\\Windows\\Fonts\\calibrib.ttf", "C:\\Windows\\Fonts\\segoeui.ttf", "C:\\Windows\\Fonts\\arialbd.ttf"]:
-            if os.path.exists(path):
-                selected_font = path
-                break
-                
-    if selected_font == "arial.ttf":
-        for path in font_choices:
-            if os.path.exists(path):
-                selected_font = path
-                break
-                
+
+    serif_candidates = [
+        str(BUNDLED_FONT),
+        "C:\\Windows\\Fonts\\Georgia.ttf",
+        "C:\\Windows\\Fonts\\cambriab.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+    ]
+    sans_candidates = [
+        str(BUNDLED_FONT),
+        "C:\\Windows\\Fonts\\segoeuib.ttf",
+        "C:\\Windows\\Fonts\\arialbd.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    ]
+
+    selected_font = None
+    for path in (serif_candidates if is_serif else sans_candidates):
+        if os.path.exists(path):
+            selected_font = path
+            break
+
     try:
         font_initials = ImageFont.truetype(selected_font, 180)
-        font_brand = ImageFont.truetype(selected_font, 85) # Large, premium brand name
-        font_sub = ImageFont.truetype(selected_font, 28) # Well proportioned subtitle
+        font_brand = ImageFont.truetype(selected_font, 85)
+        font_sub = ImageFont.truetype(selected_font, 28)
     except Exception:
         font_initials = ImageFont.load_default()
         font_brand = ImageFont.load_default()
