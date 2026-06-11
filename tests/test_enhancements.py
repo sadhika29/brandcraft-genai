@@ -3,8 +3,10 @@ import sys
 import os
 from unittest.mock import patch, MagicMock
 
-# Add project root to sys.path so we can import backend packages
-sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+# Add project root and backend to sys.path so we can import packages
+root_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(root_dir)
+sys.path.append(os.path.join(root_dir, 'backend'))
 
 from app.schemas import BrandRequest
 from app.api.generator_router import generate_names

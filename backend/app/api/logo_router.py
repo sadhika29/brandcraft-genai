@@ -69,7 +69,7 @@ def parse_color_to_rgb(color_str: str) -> tuple:
     return (216, 27, 96)
 
 def draw_procedural_logo(brand_name: str, industry: str, style: str, color_theme: str, logo_type: str, seed: int) -> Image.Image:
-    """Generates a premium styled logo procedurally using Pillow. Highly varied designs based on seed (0-11)."""
+    """Generates a premium styled logo procedurally using Pillow. Highly varied designs based on seed (0-9)."""
     # Setup canvas (800x800 for high resolution)
     img = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
     draw = ImageDraw.Draw(img)
@@ -99,20 +99,20 @@ def draw_procedural_logo(brand_name: str, industry: str, style: str, color_theme
         # Dynamically generate theme from custom user-chosen color
         primary_color = parse_color_to_rgb(color_theme)
         bg_light = (
-            int(primary_color[0] * 0.1 + 255 * 0.9),
-            int(primary_color[1] * 0.1 + 255 * 0.9),
-            int(primary_color[2] * 0.1 + 255 * 0.9)
+            int(primary_color[0] * 0.12 + 255 * 0.88),
+            int(primary_color[1] * 0.12 + 255 * 0.88),
+            int(primary_color[2] * 0.12 + 255 * 0.88)
         )
         accent_color = (
-            int(primary_color[0] * 0.7),
-            int(primary_color[1] * 0.7),
-            int(primary_color[2] * 0.7)
+            max(0, int(primary_color[0] * 0.65)),
+            max(0, int(primary_color[1] * 0.65)),
+            max(0, int(primary_color[2] * 0.65))
         )
     
     # 1. VARIED BACKGROUND DESIGNS (0-3 styles)
     bg_style = seed % 4
     if bg_style == 0:
-        # Diagonal Linear Gradient
+        # Diagonal Linear Gradient (Elegant transition)
         for y in range(800):
             blend = y / 800.0
             r = int(bg_light[0] * (1 - blend) + 255 * blend)
@@ -121,16 +121,19 @@ def draw_procedural_logo(brand_name: str, industry: str, style: str, color_theme
             draw.line([(0, y), (800, y)], fill=(r, g, b, 255))
     elif bg_style == 1:
         # Solid Dark metallic background
-        dark_color = (24, 24, 28, 255) if "dark" not in color_key else (18, 18, 20, 255)
+        dark_color = (20, 20, 24, 255)
         draw.rectangle([0, 0, 800, 800], fill=dark_color)
+        # Add subtle inner border
+        draw.rectangle([15, 15, 785, 785], fill=None, outline=(primary_color[0], primary_color[1], primary_color[2], 80), width=2)
     elif bg_style == 2:
-        # Solid white background with colored outer border
+        # Clean white background with premium double outer border
         draw.rectangle([0, 0, 800, 800], fill=(255, 255, 255, 255))
-        draw.rectangle([20, 20, 780, 780], fill=None, outline=accent_color, width=4)
+        draw.rectangle([25, 25, 775, 775], fill=None, outline=accent_color, width=4)
+        draw.rectangle([35, 35, 765, 765], fill=None, outline=primary_color, width=1)
     else:
-        # Radial Gradient (Simulated)
+        # Radial Gradient (Simulated center glow)
         cx, cy = 400, 400
-        for r_val in range(600, 0, -4):
+        for r_val in range(600, 0, -3):
             blend = r_val / 600.0
             r = int(bg_light[0] * blend + 255 * (1 - blend))
             g = int(bg_light[1] * blend + 255 * (1 - blend))
@@ -141,127 +144,208 @@ def draw_procedural_logo(brand_name: str, industry: str, style: str, color_theme
     is_dark_bg = (bg_style == 1)
     text_color = accent_color if not is_dark_bg else bg_light
     sub_color = primary_color if not is_dark_bg else primary_color
-    if is_dark_bg and "dark" in color_key:
-        text_color = (255, 180, 190) # Pink text on dark
-        sub_color = (255, 229, 236)
+    if is_dark_bg:
+        text_color = (255, 255, 255)
+        sub_color = (int(primary_color[0] * 0.4 + 255 * 0.6), int(primary_color[1] * 0.4 + 255 * 0.6), int(primary_color[2] * 0.4 + 255 * 0.6))
         
     initials = brand_name[:2].upper() if len(brand_name) >= 2 else brand_name[:1].upper()
     
     # Fonts loading fallback
-    try:
-        font_paths = [
-            "C:\\Windows\\Fonts\\Georgia.ttf",
-            "C:\\Windows\\Fonts\\calibri.ttf",
-            "C:\\Windows\\Fonts\\arial.ttf",
-            "C:\\Windows\\Fonts\\segoeui.ttf"
-        ]
-        font_file = "arial.ttf"
-        for path in font_paths:
+    font_choices = [
+        "C:\\Windows\\Fonts\\Georgia.ttf",
+        "C:\\Windows\\Fonts\\segoeuib.ttf",
+        "C:\\Windows\\Fonts\\segoeui.ttf",
+        "C:\\Windows\\Fonts\\calibrib.ttf",
+        "C:\\Windows\\Fonts\\calibri.ttf",
+        "C:\\Windows\\Fonts\\arialbd.ttf",
+        "C:\\Windows\\Fonts\\arial.ttf"
+    ]
+    
+    is_serif = (seed % 2 == 0) or ("luxury" in style.lower()) or ("vintage" in style.lower())
+    selected_font = "arial.ttf"
+    
+    if is_serif:
+        for path in ["C:\\Windows\\Fonts\\Georgia.ttf", "C:\\Windows\\Fonts\\cambriab.ttf", "C:\\Windows\\Fonts\\cambria.ttf"]:
             if os.path.exists(path):
-                font_file = path
+                selected_font = path
+                break
+    else:
+        for path in ["C:\\Windows\\Fonts\\segoeuib.ttf", "C:\\Windows\\Fonts\\calibrib.ttf", "C:\\Windows\\Fonts\\segoeui.ttf", "C:\\Windows\\Fonts\\arialbd.ttf"]:
+            if os.path.exists(path):
+                selected_font = path
                 break
                 
-        # Use different font styles based on seed to change visual aesthetics
-        if seed % 3 == 0 and os.path.exists("C:\\Windows\\Fonts\\Georgia.ttf"):
-            font_file = "C:\\Windows\\Fonts\\Georgia.ttf" # Serif
-        elif seed % 3 == 1 and os.path.exists("C:\\Windows\\Fonts\\segoeui.ttf"):
-            font_file = "C:\\Windows\\Fonts\\segoeui.ttf" # Sans-serif
-            
-        font_initials = ImageFont.truetype(font_file, 200)
-        font_brand = ImageFont.truetype(font_file, 55)
-        font_sub = ImageFont.truetype(font_file, 24)
+    if selected_font == "arial.ttf":
+        for path in font_choices:
+            if os.path.exists(path):
+                selected_font = path
+                break
+                
+    try:
+        font_initials = ImageFont.truetype(selected_font, 180)
+        font_brand = ImageFont.truetype(selected_font, 85) # Large, premium brand name
+        font_sub = ImageFont.truetype(selected_font, 28) # Well proportioned subtitle
     except Exception:
         font_initials = ImageFont.load_default()
         font_brand = ImageFont.load_default()
         font_sub = ImageFont.load_default()
 
-    cx, cy = 400, 310
+    cx, cy = 400, 290
     
-    # 2. DRASTICALLY VARIED FOREGROUND ICON DESIGNS (0-7)
-    design_type = seed % 8
+    # 2. DRASTICALLY VARIED FOREGROUND ICON DESIGNS (0-9)
+    design_type = seed % 10
     
     if design_type == 0:
-        # Classical Circular Monogram
+        # Classical Circular Monogram Crest (Luxury Style)
         draw.ellipse([cx-140, cy-140, cx+140, cy+140], fill=None, outline=text_color, width=6)
         draw.ellipse([cx-125, cy-125, cx+125, cy+125], fill=None, outline=sub_color, width=2)
-        draw.text((cx, cy - 15), initials, fill=text_color, anchor="mm", font=font_initials)
+        # Decorative stars around the ring
+        import math
+        for star_idx in range(12):
+            angle = star_idx * (360 / 12)
+            rad = math.radians(angle)
+            sx = cx + int(132 * math.cos(rad))
+            sy = cy + int(132 * math.sin(rad))
+            # Draw a star-like diamond
+            draw.polygon([(sx, sy-6), (sx+4, sy), (sx, sy+6), (sx-4, sy)], fill=sub_color)
+        draw.text((cx, cy - 10), initials, fill=text_color, anchor="mm", font=font_initials)
+        
     elif design_type == 1:
-        # Minimalist Triangle Vector
-        draw.regular_polygon((cx, cy, 140), 3, rotation=0, fill=None, outline=text_color, width=10)
-        draw.regular_polygon((cx, cy, 90), 3, rotation=180, fill=sub_color)
+        # Modern Hexagon Circuit Tech Badge
+        draw.regular_polygon((cx, cy, 140), 6, rotation=30, fill=None, outline=text_color, width=8)
+        draw.regular_polygon((cx, cy, 115), 6, rotation=30, fill=None, outline=sub_color, width=2)
+        # Circuit connections
+        draw.line([(cx-121, cy-70), (cx-150, cy-100)], fill=text_color, width=4)
+        draw.ellipse([cx-156, cy-106, cx-144, cy-94], fill=text_color)
+        draw.line([(cx+121, cy+70), (cx+150, cy+100)], fill=text_color, width=4)
+        draw.ellipse([cx+144, cy+94, cx+156, cy+106], fill=text_color)
+        draw.text((cx, cy - 10), initials, fill=text_color, anchor="mm", font=font_initials)
+        
     elif design_type == 2:
-        # Startup Overlapping Circles
-        draw.ellipse([cx-110, cy-90, cx+20, cy+40], fill=(primary_color[0], primary_color[1], primary_color[2], 160))
-        draw.ellipse([cx-20, cy-40, cx+110, cy+90], fill=(accent_color[0], accent_color[1], accent_color[2], 160))
-        draw.ellipse([cx-40, cy-40, cx+40, cy+40], fill=(255, 255, 255, 200))
+        # Overlapping Venn Rings (Modern SaaS / Innovation Style)
+        # Transparent overlapping rings
+        r_col = (primary_color[0], primary_color[1], primary_color[2], 120)
+        a_col = (accent_color[0], accent_color[1], accent_color[2], 120)
+        draw.ellipse([cx-110, cy-70, cx+20, cy+60], fill=r_col, outline=text_color, width=4)
+        draw.ellipse([cx-20, cy-60, cx+110, cy+70], fill=a_col, outline=sub_color, width=4)
+        # Center core shield
+        draw.ellipse([cx-45, cy-45, cx+45, cy+45], fill=(255, 255, 255, 230), outline=text_color, width=2)
         try:
-            icon_font = ImageFont.truetype(font_file, 65)
+            icon_font = ImageFont.truetype(selected_font, 65)
         except Exception:
             icon_font = font_sub
         draw.text((cx, cy), initials, fill=text_color, anchor="mm", font=icon_font)
+        
     elif design_type == 3:
-        # Ornate Hexagon Badge
-        draw.regular_polygon((cx, cy, 140), 6, rotation=30, fill=None, outline=text_color, width=8)
-        draw.regular_polygon((cx, cy, 120), 6, rotation=30, fill=None, outline=sub_color, width=2)
-        draw.text((cx, cy - 15), initials, fill=text_color, anchor="mm", font=font_initials)
-    elif design_type == 4:
-        # Minimalist Abstract Line Wreath
+        # Botanical Laurel Wreath (Wellness / Life Style)
+        # Draw laurel branch paths
+        draw.arc([cx-130, cy-130, cx+130, cy+130], start=35, end=325, fill=text_color, width=4)
+        # Draw leaves
         import math
-        for angle in range(0, 360, 45):
-            rad = math.radians(angle)
-            x1 = cx + int(100 * math.cos(rad))
-            y1 = cy + int(100 * math.sin(rad))
-            draw.ellipse([x1-15, y1-15, x1+15, y1+15], fill=sub_color)
-        draw.ellipse([cx-70, cy-70, cx+70, cy+70], fill=None, outline=text_color, width=4)
+        for angle_deg in range(40, 330, 25):
+            rad = math.radians(angle_deg)
+            lx = cx + int(130 * math.cos(rad))
+            ly = cy + int(130 * math.sin(rad))
+            # Leaf rotation vectors
+            nx = int(16 * math.cos(rad + 0.5))
+            ny = int(16 * math.sin(rad + 0.5))
+            draw.ellipse([lx-nx-6, ly-ny-6, lx+nx+6, ly+ny+6], fill=sub_color)
+        # Draw central rosebud or leaf crest
+        draw.polygon([(cx, cy-80), (cx+30, cy-30), (cx, cy+20), (cx-30, cy-30)], fill=text_color)
+        draw.ellipse([cx-15, cy-40, cx+15, cy-10], fill=sub_color)
+        
+    elif design_type == 4:
+        # Mountain Peak / Geometric Triangle (Adventure / Tech Style)
+        # Glow background sun
+        draw.ellipse([cx-60, cy-80, cx+60, cy+40], fill=sub_color)
+        # Draw 3 nested peaks
+        draw.polygon([(cx-140, cy+100), (cx-40, cy-80), (cx+60, cy+100)], fill=(accent_color[0], accent_color[1], accent_color[2], 180), outline=text_color, width=4)
+        draw.polygon([(cx-60, cy+100), (cx+40, cy-60), (cx+140, cy+100)], fill=(primary_color[0], primary_color[1], primary_color[2], 220), outline=text_color, width=4)
+        draw.polygon([(cx-100, cy+100), (cx, cy-100), (cx+100, cy+100)], fill=None, outline=text_color, width=6)
+        # Horizontal base cut lines
+        draw.line([(cx-160, cy+115), (cx+160, cy+115)], fill=text_color, width=4)
+        
+    elif design_type == 5:
+        # Rotated Diamond Badge (Vintage Style)
+        draw.regular_polygon((cx, cy, 140), 4, rotation=45, fill=None, outline=text_color, width=8)
+        draw.regular_polygon((cx, cy, 120), 4, rotation=45, fill=None, outline=sub_color, width=2)
+        # Horizontal ribbon belt
+        draw.rectangle([cx-150, cy-35, cx+150, cy+35], fill=text_color)
+        draw.rectangle([cx-140, cy-25, cx+140, cy+25], fill=None, outline=bg_light if not is_dark_bg else bg_light, width=2)
         try:
-            icon_font = ImageFont.truetype(font_file, 90)
+            ribbon_font = ImageFont.truetype(selected_font, 50)
+        except Exception:
+            ribbon_font = font_sub
+        draw.text((cx, cy), initials, fill=bg_light if not is_dark_bg else (20, 20, 24), anchor="mm", font=ribbon_font)
+        
+    elif design_type == 6:
+        # Isometric Technology Cube Wireframe
+        # Draw isometric wire lines
+        pts = [
+            (cx, cy-120), (cx+110, cy-60), (cx+110, cy+60),
+            (cx, cy+120), (cx-110, cy+60), (cx-110, cy-60)
+        ]
+        draw.polygon(pts, fill=None, outline=text_color, width=6)
+        # Internal cube struts
+        draw.line([(cx, cy-120), (cx, cy+120)], fill=text_color, width=4)
+        draw.line([(cx, cy), (cx+110, cy-60)], fill=sub_color, width=4)
+        draw.line([(cx, cy), (cx-110, cy-60)], fill=sub_color, width=4)
+        # Vertex terminals (nodes)
+        for pt in pts + [(cx, cy), (cx, cy-120), (cx, cy+120)]:
+            draw.ellipse([pt[0]-10, pt[1]-10, pt[0]+10, pt[1]+10], fill=sub_color, outline=text_color, width=2)
+            
+    elif design_type == 7:
+        # Traditional Quartered Heraldic Shield Crest
+        shield_pts = [
+            (cx - 120, cy - 130), (cx + 120, cy - 130),
+            (cx + 120, cy + 10), (cx, cy + 140),
+            (cx - 120, cy + 10)
+        ]
+        draw.polygon(shield_pts, fill=None, outline=text_color, width=8)
+        # Quadrant lines
+        draw.line([(cx, cy-130), (cx, cy+140)], fill=sub_color, width=3)
+        draw.line([(cx-120, cy+10), (cx+120, cy+10)], fill=sub_color, width=3)
+        # Small star toppers
+        draw.polygon([(cx, cy-160), (cx+12, cy-142), (cx, cy-150), (cx-12, cy-142)], fill=text_color)
+        draw.text((cx, cy - 50), initials, fill=text_color, anchor="mm", font=font_sub)
+        
+    elif design_type == 8:
+        # Infinite Ribbon Wreath (Modern Abstract Loop)
+        r_col = (primary_color[0], primary_color[1], primary_color[2], 140)
+        a_col = (accent_color[0], accent_color[1], accent_color[2], 140)
+        # 3 nested rotated oval ellipses
+        draw.ellipse([cx-140, cy-70, cx+140, cy+70], fill=None, outline=r_col, width=8)
+        draw.ellipse([cx-70, cy-140, cx+70, cy+140], fill=None, outline=a_col, width=8)
+        # Intersection dots
+        draw.ellipse([cx-8, cy-8, cx+8, cy+8], fill=text_color)
+        try:
+            icon_font = ImageFont.truetype(selected_font, 90)
         except Exception:
             icon_font = font_sub
         draw.text((cx, cy - 5), initials, fill=text_color, anchor="mm", font=icon_font)
-    elif design_type == 5:
-        # Modern Shield / Protection Emblem
-        shield_pts = [
-            (cx - 120, cy - 120), (cx + 120, cy - 120),
-            (cx + 120, cy + 20), (cx, cy + 150),
-            (cx - 120, cy + 20)
-        ]
-        draw.polygon(shield_pts, fill=None, outline=text_color, width=8)
-        draw.polygon([(p[0], p[1]) for p in shield_pts], fill=None, outline=sub_color, width=2)
-        draw.text((cx, cy - 15), initials, fill=text_color, anchor="mm", font=font_initials)
-    elif design_type == 6:
-        # Botanical Circle (Mehndi/Floral inspired vector)
-        draw.ellipse([cx-130, cy-130, cx+130, cy+130], fill=None, outline=sub_color, width=4)
-        # Draw floral radial leaves
-        import math
-        for leaf in range(8):
-            rad = math.radians(leaf * 45)
-            lx = cx + int(130 * math.cos(rad))
-            ly = cy + int(130 * math.sin(rad))
-            draw.ellipse([lx-10, ly-10, lx+10, ly+10], fill=text_color)
-        draw.text((cx, cy - 15), initials, fill=text_color, anchor="mm", font=font_initials)
+        
     else:
-        # Tech Square / Circuit Grid
+        # Typographic Crest Badge
         draw.rectangle([cx-120, cy-120, cx+120, cy+120], fill=None, outline=text_color, width=8)
-        draw.line([(cx-120, cy), (cx+120, cy)], fill=sub_color, width=2)
-        draw.line([(cx, cy-120), (cx, cy+120)], fill=sub_color, width=2)
-        draw.rectangle([cx-60, cy-60, cx+60, cy+60], fill=(255,255,255,255))
-        try:
-            icon_font = ImageFont.truetype(font_file, 90)
-        except Exception:
-            icon_font = font_sub
-        draw.text((cx, cy), initials, fill=text_color, anchor="mm", font=icon_font)
+        draw.rectangle([cx-105, cy-105, cx+105, cy+105], fill=None, outline=sub_color, width=2)
+        # Corner diamonds
+        for offset in [-120, 120]:
+            draw.polygon([(cx+offset, cy-6), (cx+offset+6, cy), (cx+offset, cy+6), (cx+offset-6, cy)], fill=text_color)
+            draw.polygon([(cx, cy+offset-6), (cx+6, cy+offset), (cx, cy+offset+6), (cx-6, cy+offset)], fill=text_color)
+        draw.text((cx, cy - 10), initials, fill=text_color, anchor="mm", font=font_initials)
 
     # 3. TEXT POSITIONS
-    text_y = 560
+    text_y = 550
+    # Render Brand Name (Bold, clear, and prominent)
     draw.text((cx, text_y), brand_name, fill=text_color, anchor="mm", font=font_brand)
     
     # Subtitle (Industry / Tagline)
     sub_text = industry.upper()
-    draw.text((cx, text_y + 60), sub_text, fill=sub_color, anchor="mm", font=font_sub)
+    draw.text((cx, text_y + 70), sub_text, fill=sub_color, anchor="mm", font=font_sub)
     
-    # Sparkle / Line decorations at the bottom
-    draw.line([(cx-200, text_y + 60), (cx-90, text_y + 60)], fill=text_color, width=2)
-    draw.line([(cx+90, text_y + 60), (cx+200, text_y + 60)], fill=text_color, width=2)
+    # Elegant divider accents flanking the subtitle text
+    draw.line([(cx-230, text_y + 70), (cx-110, text_y + 70)], fill=text_color, width=2)
+    draw.line([(cx+110, text_y + 70), (cx+230, text_y + 70)], fill=text_color, width=2)
 
     return img
 
