@@ -1,162 +1,228 @@
 import json
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+import re
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import google.generativeai as genai
 
 from app.database import get_db
 from app.models import User, SavedContent
-from app.schemas import ContentRequest, ContentResponse, ContentDataSchema
+from app.schemas import ContentRequest, ContentResponse
 from app.auth import get_current_user
 from app.config import GEMINI_API_KEY, HAS_GEMINI_KEY
 
 router = APIRouter(prefix="/api/content", tags=["content"])
+
 logger = logging.getLogger(__name__)
 
-# Configure Gemini if key is present
 if HAS_GEMINI_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
+
 def generate_fallback_content(req: ContentRequest) -> dict:
-    """Procedurally generates varied mock content matching the required counts."""
     logger.info("Using procedural fallback content generator.")
-    
-    # 1. 50 Slogans
+
+    brand_name = req.brand_name.strip()
+    industry = req.industry.strip().lower()
+    tone = req.tone.strip().lower()
+
     slogan_templates = [
         "Redefining {industry} with a {tone} touch.",
         "Where {industry} meets excellence.",
         "Your journey in {industry} starts here.",
-        "The {tone} way to experience your daily routine.",
-        "Making {industry} better everyday.",
-        "Innovating your life, one {industry} solution at a time.",
+        "The {tone} way to experience {industry}.",
+        "Making {industry} better every day.",
+        "Innovating your world through smarter {industry} solutions.",
         "Simple. Smart. Reliable.",
-        "The gold standard of {industry}.",
-        "Unlocking potential, inspiring growth.",
-        "Your partner in modern {industry}.",
-        "Simply the best for you.",
-        "Empowering your tomorrow.",
-        "The future of {industry} starts now.",
-        "Crafted for performance, styled for elegance.",
-        "Designed to inspire.",
-        "Your dream, our blueprint."
+        "The new standard for {industry}.",
+        "Unlocking potential through {industry} innovation.",
+        "Your trusted partner in modern {industry}.",
+        "Built for today. Ready for tomorrow.",
+        "Empowering people through better {industry}.",
+        "The future of {industry} starts here.",
+        "Crafted for performance. Designed for impact.",
+        "Ideas that inspire. Solutions that deliver.",
+        "Turning possibilities into progress."
     ]
-    
+
     slogans = []
+
     for i in range(5):
-        tmpl = slogan_templates[i % len(slogan_templates)]
-        formatted = tmpl.format(industry=req.industry.lower(), tone=req.tone.lower())
-        slogans.append(f"{req.brand_name}: {formatted} (Option {i+1})")
-        
-    # 2. 10 Brand Stories
+        slogans.append(
+            slogan_templates[i].format(
+                industry=industry,
+                tone=tone
+            )
+        )
+
     story_templates = [
-        "Founded with a vision to revolutionize {industry}, {brand_name} was born out of a desire for authentic, {tone} solutions that empower everyday builders.",
-        "At {brand_name}, we believe that {industry} should be accessible, high-quality, and tailored to your lifestyle. We exist to bring simplicity to a complex world.",
-        "From humble beginnings in a small workshop to a leading name in {industry}, {brand_name} stands for trust, quality, and endless innovation.",
-        "Our journey began with a single question: How can we make {industry} more human? Today, {brand_name} answers that question for thousands of customers.",
-        "We don't just build products; we craft experiences. At {brand_name}, our core values revolve around absolute {tone} integrity and customer empowerment.",
-        "Innovation is in our DNA. We consistently push the boundaries of what is possible in {industry} to bring you the best performance.",
-        "Behind {brand_name} is a team of designers, engineers, and visionaries united by a common passion: creating a better standard for {industry}.",
-        "We believe in sustainability. {brand_name} combines eco-conscious materials with state-of-the-art technology to shape a better future.",
-        "Every line, every detail, every product at {brand_name} is crafted with a single purpose: helping you achieve your branding goals with ease.",
-        "The history of {brand_name} is written by our customers. We grow together, building a legacy of excellence and trust in {industry}."
+        "Born from a vision to transform {industry}, {brand_name} was created to deliver meaningful, {tone} experiences for modern customers.",
+        "At {brand_name}, we believe that great {industry} experiences should be simple, accessible, and memorable.",
+        "The journey of {brand_name} began with one goal: to create a better and more meaningful experience in {industry}.",
+        "Driven by innovation and customer needs, {brand_name} brings a fresh {tone} perspective to {industry}.",
+        "We created {brand_name} to turn everyday challenges into opportunities through thoughtful {industry} solutions.",
+        "Behind {brand_name} is a passion for creativity, quality, and continuous improvement in {industry}.",
+        "{brand_name} combines modern ideas with a human approach to create lasting value in {industry}.",
+        "Our mission at {brand_name} is to make {industry} more engaging, useful, and accessible for everyone.",
+        "Every detail of {brand_name} reflects our commitment to quality, innovation, and customer satisfaction.",
+        "With a vision for the future, {brand_name} continues to push the boundaries of what is possible in {industry}."
     ]
-    
-    brand_stories = []
-    for i in range(1):
-        tmpl = story_templates[i]
-        brand_stories.append(tmpl.format(brand_name=req.brand_name, industry=req.industry.lower(), tone=req.tone.lower()))
 
-    # 3. 20 Product Descriptions
-    product_lines = ["Core", "Pro", "Ultra", "Classic", "Go", "Max", "Prime", "Lite", "Elite", "Signature", "One", "Connect", "X", "Alpha", "Apex", "Nova", "Quest", "Link", "Sync", "Plus"]
+    brand_stories = [
+        story_templates[0].format(
+            brand_name=brand_name,
+            industry=industry,
+            tone=tone
+        )
+    ]
+
     product_templates = [
-        "Introducing {brand_name} {line}: The quintessential addition to your {industry} routine, blending a {tone} finish with exceptional performance.",
-        "The {brand_name} {line}: Designed for demanding {industry} environments, delivering top-tier reliability and value.",
-        "Meet {brand_name} {line}: Compact, smart, and fully optimized for modern users. Experience {industry} like never before.",
-        "Our signature {brand_name} {line} features an elegant, {tone} design combined with state of the art technology in {industry}.",
-        "The {brand_name} {line} brings sustainable materials and {tone} craftsmanship to your favorite {industry} utilities."
+        "Introducing {brand_name} Core, a reliable solution designed to simplify your {industry} experience with a {tone} approach.",
+        "Meet {brand_name} Pro, created for users who want better performance, flexibility, and value in {industry}.",
+        "{brand_name} Ultra combines advanced features with an intuitive experience built for modern {industry} users.",
+        "{brand_name} Classic delivers dependable performance while maintaining a clean and timeless design.",
+        "{brand_name} Max is designed for customers who expect powerful performance and a premium {industry} experience.",
+        "{brand_name} Prime brings together quality, innovation, and convenience in one complete {industry} solution.",
+        "{brand_name} Lite provides a simple and efficient way to manage everyday {industry} needs.",
+        "{brand_name} Elite is designed for customers looking for premium quality and an elevated experience.",
+        "{brand_name} One brings essential {industry} features together in one convenient solution.",
+        "{brand_name} Connect helps modern users stay connected while managing their {industry} needs.",
+        "{brand_name} Nova introduces a fresh approach to {industry} through innovative design and functionality.",
+        "{brand_name} Apex is built for customers who want high performance and dependable results."
     ]
-    
+
     product_descriptions = []
-    for i in range(2):
-        line = product_lines[i]
-        tmpl = product_templates[i % len(product_templates)]
-        product_descriptions.append(tmpl.format(brand_name=req.brand_name, line=line, industry=req.industry.lower(), tone=req.tone.lower()))
 
-    # 4. 20 Social Media Captions
+    for i in range(2):
+        product_descriptions.append(
+            product_templates[i].format(
+                brand_name=brand_name,
+                industry=industry,
+                tone=tone
+            )
+        )
+
+    brand_clean = "".join(
+        character for character in brand_name
+        if character.isalnum()
+    ).lower()
+
     social_templates = [
-        "Elevating your day-to-day routine with {brand_name}. ✨ How do you handle your {industry} needs? #{brand_clean} #lifestyle",
-        "Minimalist design, maximum output. That is the {brand_name} promise. 💼 #{brand_clean} #business",
-        "Behind the scenes at our {industry} studio. Hard work meets a {tone} vision! 🛠️ #{brand_clean} #innovation",
-        "Sunday mornings are better with {brand_name}. ☕ What is your favorite product from our catalog? #relax #weekend",
-        "Big announcements coming soon! Stay tuned as we prepare to change the face of {industry} forever. 🚀 #staytuned",
-        "Performance isn't an accident. It's a design choice. Check out our {tone} collection. Link in bio! 🔗 #design",
-        "Our customers speak for themselves: '{brand_name} changed my workflow!' Thank you for the love! ❤️ #grateful",
-        "Simple, sleek, and highly effective. Which color path fits your vibe? 🎨 #colorpalette #branding",
-        "Start your week strong with {brand_name}. We have got your {industry} worries covered. 💪 #motivation #monday",
-        "Celebrating 5 years of quality. Thank you for making {brand_name} your primary choice! 🎉 #anniversary"
+        "Elevate your {industry} experience with {brand_name}. Discover what makes our approach different. ✨ #{brand_clean} #branding",
+        "Innovation meets purpose at {brand_name}. Built to make your {industry} journey smarter and simpler. 🚀 #{brand_clean} #innovation",
+        "A better {industry} experience starts with better ideas. That is the {brand_name} way. 💡 #{brand_clean} #business",
+        "Behind every great brand is a clear purpose. Follow the journey of {brand_name}. ❤️ #{brand_clean} #brandstory",
+        "Simple ideas can create powerful experiences. Discover {brand_name} and rethink {industry}. ✨ #{brand_clean} #design",
+        "Your audience deserves something better. {brand_name} is here to deliver it. 🚀 #{brand_clean} #marketing",
+        "Great products begin with great customer understanding. That is what drives {brand_name}. 💙 #{brand_clean} #customers",
+        "From concept to experience, {brand_name} is built around creativity and impact. 🎯 #{brand_clean} #branding",
+        "Ready to experience {industry} differently? Meet {brand_name}. 🔥 #{brand_clean} #innovation",
+        "We are building the future of {industry}, one idea at a time. Join {brand_name}. 🌟 #{brand_clean} #future"
     ]
-    
+
     social_media_captions = []
-    brand_clean = req.brand_name.replace(" ", "")
+
     for i in range(2):
-        tmpl = social_templates[i % len(social_templates)]
-        social_media_captions.append(tmpl.format(brand_name=req.brand_name, brand_clean=brand_clean, industry=req.industry.lower(), tone=req.tone.lower()) + f" (Option {i+1})")
+        social_media_captions.append(
+            social_templates[i].format(
+                brand_name=brand_name,
+                brand_clean=brand_clean,
+                industry=industry
+            )
+        )
 
-    # 5. 10 Advertisement Copies
-    ad_templates = [
-        "Tired of average {industry}? Discover the {brand_name} difference today. Get 20% off your first order! Click Learn More.",
-        "Built for those who demand a {tone} experience. Upgrade to {brand_name} and feel the performance shift immediately.",
-        "Can your current {industry} tools do this? Meet {brand_name} – the smart, reliable solution built for modern creators.",
-        "Stop wasting time on sub-par setups. {brand_name} delivers premium {industry} features at an affordable cost. Buy now!",
-        "Simplicity is the ultimate sophistication. {brand_name} brings a clean, {tone} design to your daily life. Explore now.",
-        "Say goodbye to complications. {brand_name} is here to streamline your {industry} projects. Try it risk-free today!",
-        "What makes a brand memorable? It starts with the right foundation. Build yours with {brand_name} today. Sign up.",
-        "Quality you can trust. Style you can see. {brand_name} is the gold standard for modern {industry}. Buy today.",
-        "Engineered for speed, crafted for comfort. Experience {brand_name} now and get free shipping worldwide!",
-        "Your startup deserves the best. Boost your brand identity with the {tone} style of {brand_name}. Get started."
+    advertisement_templates = [
+        {
+            "hook": "Ready for a better {industry} experience?",
+            "body": "{brand_name} brings a fresh, {tone}, and customer-focused approach designed for modern users.",
+            "cta": "Discover {brand_name} today."
+        },
+        {
+            "hook": "Your {industry} journey deserves better.",
+            "body": "Experience the quality, simplicity, and innovation of {brand_name}.",
+            "cta": "Explore {brand_name} now."
+        },
+        {
+            "hook": "Meet the next generation of {industry}.",
+            "body": "{brand_name} combines thoughtful design with practical solutions for today's customers.",
+            "cta": "Get started today."
+        },
+        {
+            "hook": "Stop settling for ordinary.",
+            "body": "{brand_name} delivers a modern and {tone} approach to {industry}.",
+            "cta": "Experience the difference."
+        },
+        {
+            "hook": "Better ideas. Better experiences.",
+            "body": "{brand_name} is designed around what customers really need from {industry}.",
+            "cta": "Discover more."
+        },
+        {
+            "hook": "Make your {industry} experience smarter.",
+            "body": "Choose {brand_name} for a simple, reliable, and innovative experience.",
+            "cta": "Try {brand_name} today."
+        },
+        {
+            "hook": "Innovation starts with a better idea.",
+            "body": "{brand_name} turns that idea into a meaningful {industry} experience.",
+            "cta": "Start your journey."
+        },
+        {
+            "hook": "Built for modern customers.",
+            "body": "{brand_name} brings quality and creativity together to improve your {industry} experience.",
+            "cta": "Learn more today."
+        },
+        {
+            "hook": "Your needs come first.",
+            "body": "Discover how {brand_name} makes {industry} simpler, smarter, and more enjoyable.",
+            "cta": "Explore now."
+        },
+        {
+            "hook": "The future is already here.",
+            "body": "{brand_name} is creating a new standard for modern {industry}.",
+            "cta": "Join the future."
+        }
     ]
-    
-    advertisement_copies = []
-    for i in range(1):
-        tmpl = ad_templates[i]
-        advertisement_copies.append(tmpl.format(brand_name=req.brand_name, industry=req.industry.lower(), tone=req.tone.lower()))
 
-    # 6. 10 Email Templates
-    subjects = [
-        "Welcome to the {brand_name} Family!",
-        "Your exclusive 15% discount code is inside",
-        "How to optimize your {industry} strategy",
-        "Introducing our new premium line",
-        "A personal message from the founder of {brand_name}",
-        "Is your branding holding you back?",
-        "Tips for creating a modern brand identity",
-        "Here is what you missed this week at {brand_name}",
-        "Unlock 24/7 access to branding expert guides",
-        "Your opinion matters to us (Quick feedback request)"
+    ad = advertisement_templates[0]
+
+    advertisement_copies = [
+        (
+            f"{ad['hook'].format(industry=industry)}\n\n"
+            f"{ad['body'].format(brand_name=brand_name, tone=tone, industry=industry)}\n\n"
+            f"{ad['cta'].format(brand_name=brand_name)}"
+        )
     ]
-    
-    bodies = [
-        "Dear Customer,\n\nDiscover how {brand_name} is bringing a {tone} approach to {industry}. We are thrilled to have you with us!\n\nBest regards,\nThe {brand_name} Team",
-        "Hello,\n\nAs a thank you for joining us, here is a 15% discount code for your next purchase: BRIGHT15. Enter it at checkout.\n\nBest,\nThe {brand_name} Team",
-        "Hi there,\n\nSuccessful brands don't happen by accident. Here are 3 tips to streamline your {industry} positioning and stand out in the crowd.\n\nRead more on our blog.\n\nBest,\n{brand_name}",
-        "Dear Customer,\n\nWe are proud to unveil our latest premium catalog. Crafted with absolute {tone} design principles to fit your startup needs.\n\nShop now,\nThe {brand_name} Team",
-        "Hello,\n\nI started {brand_name} with a simple goal: to make {industry} accessible, high-quality, and elegant. Thank you for supporting our dream.\n\nWarmly,\nFounder of {brand_name}",
-        "Hi,\n\nIs your messaging reaching the right audience? Let's audit your current {industry} campaign together and fix the bottlenecks.\n\nTalk soon,\n{brand_name} Support",
-        "Hello,\n\nIn this newsletter, we discuss typography, logo guidelines, and slogans. Learn how to craft a {tone} identity.\n\nRead now,\n{brand_name}",
-        "Hi there,\n\nIt has been a busy week! Here is a recap of our top articles, product releases, and updates regarding {industry}.\n\nBest,\n{brand_name}",
-        "Hello,\n\nReady to scale? Unlock unlimited resources and connect with branding experts to elevate your startup today.\n\nGet started,\n{brand_name}",
-        "Dear Customer,\n\nWe strive to improve everyday. Please take 2 minutes to let us know how we can make your {industry} experience better.\n\nTake survey,\n{brand_name} Team"
+
+    email_templates = [
+        {
+            "subject": f"Welcome to the {brand_name} experience",
+            "body": (
+                f"Hello,\n\n"
+                f"We are excited to introduce you to {brand_name}, "
+                f"a fresh approach to {industry} built around quality, innovation, and customer needs.\n\n"
+                f"Discover what makes our {tone} approach different and see how {brand_name} "
+                f"can make your experience better.\n\n"
+                f"Best regards,\n"
+                f"The {brand_name} Team"
+            )
+        },
+        {
+            "subject": f"Discover what makes {brand_name} different",
+            "body": (
+                f"Hello,\n\n"
+                f"Great brands are built around great customer experiences. "
+                f"At {brand_name}, we are focused on creating meaningful solutions for {industry}.\n\n"
+                f"Explore our latest offerings and discover a better way to experience {industry}.\n\n"
+                f"Best,\n"
+                f"The {brand_name} Team"
+            )
+        }
     ]
-    
-    email_marketing_templates = []
-    for i in range(1):
-        subject = subjects[i].format(brand_name=req.brand_name, industry=req.industry)
-        body = bodies[i].format(brand_name=req.brand_name, industry=req.industry.lower(), tone=req.tone.lower())
-        email_marketing_templates.append({
-            "subject": subject,
-            "body": body
-        })
+
+    email_marketing_templates = [email_templates[0]]
 
     return {
         "slogans": slogans,
@@ -167,87 +233,304 @@ def generate_fallback_content(req: ContentRequest) -> dict:
         "email_marketing_templates": email_marketing_templates
     }
 
-@router.post("/generate", response_model=ContentResponse)
-def generate_content(req: ContentRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+
+def clean_slogans(slogans: list) -> list:
+    """
+    Removes numbering from slogans so numbering is displayed only once
+    by the frontend.
+
+    Examples:
+    1. Build Better Brands -> Build Better Brands
+    2) Think Different -> Think Different
+    Option 3: Grow Smarter -> Grow Smarter
+    """
+
+    cleaned = []
+
+    for slogan in slogans:
+        if not isinstance(slogan, str):
+            continue
+
+        slogan = slogan.strip()
+
+        # Remove common Gemini numbering formats
+        slogan = re.sub(
+            r"^\s*(?:option\s*)?\d+\s*[\.\)\:\-\–\—]\s*",
+            "",
+            slogan,
+            flags=re.IGNORECASE
+        )
+
+        # Remove Markdown bullets
+        slogan = re.sub(
+            r"^\s*[-*•]\s*",
+            "",
+            slogan
+        )
+
+        slogan = slogan.strip()
+
+        if slogan and slogan not in cleaned:
+            cleaned.append(slogan)
+
+    return cleaned
+
+
+def validate_content_data(content_data: dict) -> bool:
+    required_keys = [
+        "slogans",
+        "brand_stories",
+        "product_descriptions",
+        "social_media_captions",
+        "advertisement_copies",
+        "email_marketing_templates"
+    ]
+
+    for key in required_keys:
+        if key not in content_data:
+            return False
+
+        if not isinstance(content_data[key], list):
+            return False
+
+    return True
+
+
+@router.post(
+    "/generate",
+    response_model=ContentResponse
+)
+def generate_content(
+    req: ContentRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     content_data = None
-    
+
     if HAS_GEMINI_KEY:
+
         prompt = f"""
-        You are an expert copywriter. 
-        Generate a complete brand content pack for the following parameters:
-        - Brand Name: {req.brand_name}
-        - Industry: {req.industry}
-        - Tone of Voice: {req.tone}
-        
-        Generate exactly:
-        1. 5 distinct slogans/slogans.
-        2. 1 short brand story or about us copy variation.
-        3. 2 product description copy blocks.
-        4. 2 engaging social media captions (e.g. for Instagram/LinkedIn) with hashtags.
-        5. 1 high-converting advertisement copy variation (hook, body, and call-to-action).
-        6. 1 email marketing template, with a "subject" and "body" key.
-        
-        Return ONLY a JSON object containing the following keys mapping to arrays:
-        - "slogans" (array of strings)
-        - "brand_stories" (array of strings)
-        - "product_descriptions" (array of strings)
-        - "social_media_captions" (array of strings)
-        - "advertisement_copies" (array of strings)
-        - "email_marketing_templates" (array of objects with keys "subject" and "body")
-        
-        Ensure you generate the exact numbers requested.
-        """
-        
+You are an expert brand strategist, marketing copywriter, and creative director.
+
+Create a complete content pack for this brand:
+
+Brand Name: {req.brand_name}
+Industry: {req.industry}
+Tone of Voice: {req.tone}
+
+Generate EXACTLY:
+
+1. 5 completely different slogans.
+2. 1 short brand story / About Us paragraph.
+3. 2 different product descriptions.
+4. 2 different social media captions.
+5. 1 advertisement copy.
+6. 1 email marketing template containing subject and body.
+
+IMPORTANT RULES FOR SLOGANS:
+
+- Return exactly 5 slogans.
+- Every slogan must be different.
+- Do NOT repeat the same slogan.
+- Do NOT add numbering.
+- Do NOT write "1.", "2.", "3.", etc.
+- Do NOT write "Option 1", "Option 2", etc.
+- Do NOT use bullet points.
+- Return only the actual slogan text.
+- Do not prefix slogans with numbers.
+- Do not create duplicate slogans with only small wording changes.
+- Make the slogans specific to the brand and industry.
+- Avoid generic repeated phrases.
+
+IMPORTANT RULES FOR ALL CONTENT:
+
+- Make the content specific to the brand name and industry.
+- Keep the requested tone consistent.
+- Avoid repetitive sentences.
+- Do not include unnecessary explanations.
+- Return ONLY valid JSON.
+- Do not use Markdown.
+- Do not put the JSON inside code blocks.
+
+Return exactly this JSON structure:
+
+{{
+    "slogans": [
+        "slogan one",
+        "slogan two",
+        "slogan three",
+        "slogan four",
+        "slogan five"
+    ],
+    "brand_stories": [
+        "brand story"
+    ],
+    "product_descriptions": [
+        "product description one",
+        "product description two"
+    ],
+    "social_media_captions": [
+        "social media caption one",
+        "social media caption two"
+    ],
+    "advertisement_copies": [
+        "advertisement copy"
+    ],
+    "email_marketing_templates": [
+        {{
+            "subject": "email subject",
+            "body": "email body"
+        }}
+    ]
+}}
+"""
+
         try:
-            model_name = "gemini-2.5-flash-lite"
-            try:
-                model = genai.GenerativeModel(model_name)
-                response = model.generate_content(
-                    prompt,
-                    generation_config={"response_mime_type": "application/json"}
-                )
-            except Exception as model_err:
-                logger.warning(f"Gemini content generation with {model_name} failed: {model_err}. Trying gemini-2.5-flash...")
-                model_name = "gemini-2.5-flash"
+
+            models_to_try = [
+                "gemini-2.5-flash-lite",
+                "gemini-2.5-flash",
+                "gemini-2.0-flash"
+            ]
+
+            last_error = None
+
+            for model_name in models_to_try:
+
                 try:
+
+                    logger.info(
+                        f"Trying Gemini model: {model_name}"
+                    )
+
                     model = genai.GenerativeModel(model_name)
+
                     response = model.generate_content(
                         prompt,
-                        generation_config={"response_mime_type": "application/json"}
+                        generation_config={
+                            "response_mime_type": "application/json"
+                        }
                     )
-                except Exception as model_err2:
-                    logger.warning(f"Gemini content generation with {model_name} failed: {model_err2}. Trying gemini-2.0-flash...")
-                    model = genai.GenerativeModel("gemini-2.0-flash")
-                    response = model.generate_content(
-                        prompt,
-                        generation_config={"response_mime_type": "application/json"}
+
+                    raw_text = response.text.strip()
+
+                    if raw_text.startswith("```"):
+                        raw_text = re.sub(
+                            r"^```(?:json)?",
+                            "",
+                            raw_text,
+                            flags=re.IGNORECASE
+                        )
+
+                        raw_text = re.sub(
+                            r"```$",
+                            "",
+                            raw_text
+                        ).strip()
+
+                    content_data = json.loads(raw_text)
+
+                    if not validate_content_data(content_data):
+                        raise ValueError(
+                            "Gemini returned an invalid content structure."
+                        )
+
+                    break
+
+                except Exception as model_error:
+
+                    last_error = model_error
+
+                    logger.warning(
+                        f"Gemini model {model_name} failed: "
+                        f"{model_error}"
                     )
-            
-            content_data = json.loads(response.text)
-            
-            # Basic key verification
-            required_keys = ["slogans", "brand_stories", "product_descriptions", "social_media_captions", "advertisement_copies", "email_marketing_templates"]
-            for key in required_keys:
-                if key not in content_data or not isinstance(content_data[key], list):
-                    raise ValueError(f"Missing or invalid key in JSON output: {key}")
-                    
+
+                    content_data = None
+
+            if content_data is None:
+                raise last_error or Exception(
+                    "Gemini content generation failed."
+                )
+
         except Exception as e:
-            logger.error(f"Gemini content generation failed: {e}. Falling back to procedural content.")
+
+            logger.error(
+                f"Gemini content generation failed: {e}"
+            )
+
             content_data = generate_fallback_content(req)
+
     else:
+
+        logger.warning(
+            "Gemini API key is not configured. "
+            "Using fallback content generator."
+        )
+
         content_data = generate_fallback_content(req)
-        
-    # Save to database
-    db_content = SavedContent(
-        user_id=current_user.id,
-        brand_name=req.brand_name,
-        content_data=json.dumps(content_data)
-    )
-    db.add(db_content)
-    db.commit()
-    db.refresh(db_content)
-    
-    # Return formatted schema
+
+    # Clean slogans returned by Gemini
+    if "slogans" in content_data:
+
+        content_data["slogans"] = clean_slogans(
+            content_data["slogans"]
+        )
+
+    # Guarantee exactly 5 slogans
+    if len(content_data.get("slogans", [])) < 5:
+
+        fallback = generate_fallback_content(req)
+
+        existing = content_data.get("slogans", [])
+
+        for slogan in fallback["slogans"]:
+
+            slogan = clean_slogans([slogan])[0]
+
+            if slogan not in existing:
+                existing.append(slogan)
+
+            if len(existing) == 5:
+                break
+
+        content_data["slogans"] = existing[:5]
+
+    else:
+
+        content_data["slogans"] = (
+            content_data["slogans"][:5]
+        )
+
+    # Save generated content
+    try:
+
+        db_content = SavedContent(
+            user_id=current_user.id,
+            brand_name=req.brand_name,
+            content_data=json.dumps(
+                content_data,
+                ensure_ascii=False
+            )
+        )
+
+        db.add(db_content)
+        db.commit()
+        db.refresh(db_content)
+
+    except Exception as db_error:
+
+        db.rollback()
+
+        logger.error(
+            f"Failed to save generated content: {db_error}"
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save generated content."
+        )
+
     return ContentResponse(
         id=db_content.id,
         brand_name=db_content.brand_name,
@@ -255,33 +538,93 @@ def generate_content(req: ContentRequest, current_user: User = Depends(get_curre
         created_at=db_content.created_at
     )
 
-@router.get("/saved", response_model=List[ContentResponse])
-def get_saved_content(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    contents = db.query(SavedContent).filter(SavedContent.user_id == current_user.id).order_by(SavedContent.created_at.desc()).all()
-    
+
+@router.get(
+    "/saved",
+    response_model=List[ContentResponse]
+)
+def get_saved_content(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    contents = (
+        db.query(SavedContent)
+        .filter(
+            SavedContent.user_id == current_user.id
+        )
+        .order_by(
+            SavedContent.created_at.desc()
+        )
+        .all()
+    )
+
     response_list = []
-    for c in contents:
+
+    for content in contents:
+
         try:
-            parsed_data = json.loads(c.content_data)
+
+            parsed_data = json.loads(
+                content.content_data
+            )
+
         except Exception:
-            parsed_data = generate_fallback_content(ContentRequest(brand_name=c.brand_name, industry="Unknown", tone="Professional"))
-            
+
+            parsed_data = generate_fallback_content(
+                ContentRequest(
+                    brand_name=content.brand_name,
+                    industry="Unknown",
+                    tone="Professional"
+                )
+            )
+
+        if "slogans" in parsed_data:
+
+            parsed_data["slogans"] = clean_slogans(
+                parsed_data["slogans"]
+            )
+
         response_list.append(
             ContentResponse(
-                id=c.id,
-                brand_name=c.brand_name,
+                id=content.id,
+                brand_name=content.brand_name,
                 content_data=parsed_data,
-                created_at=c.created_at
+                created_at=content.created_at
             )
         )
+
     return response_list
 
-@router.delete("/saved/{content_id}")
-def delete_saved_content(content_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    content = db.query(SavedContent).filter(SavedContent.id == content_id, SavedContent.user_id == current_user.id).first()
+
+@router.delete(
+    "/saved/{content_id}"
+)
+def delete_saved_content(
+    content_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    content = (
+        db.query(SavedContent)
+        .filter(
+            SavedContent.id == content_id,
+            SavedContent.user_id == current_user.id
+        )
+        .first()
+    )
+
     if not content:
-        raise HTTPException(status_code=404, detail="Saved content not found")
-        
+
+        raise HTTPException(
+            status_code=404,
+            detail="Saved content not found"
+        )
+
     db.delete(content)
     db.commit()
-    return {"message": "Content deleted successfully"}
+
+    return {
+        "message": "Content deleted successfully"
+    }
